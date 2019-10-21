@@ -1,0 +1,3 @@
+# Ignore haskell build artefacts
+dist-style/
+dist-newstyle/
