@@ -39,7 +39,7 @@ Here are few examples of how to define your tables;
 
 ```Haskell
 userTable :: ParentTable
-userTable = ParentTable "users" ["firstname", "lastname", "age"]
+userTable = ParentTable "users" ["name", "age", "active"]
 
 accountTableAsParent :: ParentTable
 accountTableAsParent = ParentTable "accounts" ["name", "description"]
@@ -76,3 +76,18 @@ factory to create the data.
 
 ### Populating Child Tables
 
+Populating child tables requires the resolution of foreign keys. `Quokka` is
+aware of relationships through the `ChildTable` type. This type captures the
+related table through the type thereby faciliating a mechanism through which
+child rows can be inserted into the table. The following example demonstrates
+how to define a function to insert child rows, and then how to use the
+function. This example builds on the last example;
+
+```Haskell
+insertAccounts :: (ToRow q) => Connection -> [q] -> IO [Id]
+insertAccounts conn = buildWith1Rel conn userTable accountTableAsChild
+
+userIds <- insertUsers conn [("John" :: Text, 40 :: Int, False :: Bool)]
+accoundIds <- insertAccounts conn [
+  ("Johns Account" :: Text, "Description" :: Text, id' userIds)]
+```
