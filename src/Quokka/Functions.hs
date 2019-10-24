@@ -20,6 +20,7 @@ module Quokka.Functions (
 , build1WithManyRels
 , delete
 , deleteStatement
+, id'
 , insertStatement
 , insertStatementWith1Rel
 , insertStatementWithManyRels
@@ -32,7 +33,7 @@ import Data.Text.Encoding (encodeUtf8)
 import Database.PostgreSQL.Simple (Connection, ToRow, execute_, returning, query)
 import Database.PostgreSQL.Simple.Types (Query (Query))
 import Quokka.Types (ChildTable (ChildTable)
-                    , Id
+                    , Id (getId)
                     , ParentTable (ParentTable)
                     , Table (Table)
                     , Result (SingleResult))
@@ -197,6 +198,14 @@ deleteStatement
 deleteStatement (Table name) =
   Query (encodeUtf8 $ "truncate table " <> name <> " cascade;")
 
+
+-- Helper function to extract the underlying Int value from
+-- the first value in the list
+id' :: [Id] -> Int
+id' (x:_) =
+  getId x
+id' [] =
+  -1
 
 -- Postgres Simple does not have a function which maps from [r] -> Maybe r
 -- so we've written one that takes the head or returns Nothing in a safe

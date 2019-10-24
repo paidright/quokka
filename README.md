@@ -121,6 +121,16 @@ of the `Account` child table cannot be used in the function call `buildWithManyR
 so we had to define the `accounts` table twice, once as `ParentTable` type, and
 once as a `ChildTable` type.
 
+### Insert Single Record
+
+In the examples presented we see that even though we insert a single row the API
+treats everything as a collection. This can be a bit tiresome when we only want
+to insert one tuple. For this we have a whole series of functions that deal with
+a single record. For example to insert 1 single parent tuple with no relations we
+use the function `build1` instead of `build`. Similarly to build a parent and
+child relationship with a single tuple you can use the `build1With1Rel` instead
+off the `buildWith1Rel` function so on and so forth.
+
 ## License
 
 MIT License

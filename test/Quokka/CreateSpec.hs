@@ -9,11 +9,18 @@ import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8)
 import Database.PostgreSQL.Simple.Types (Query (Query))
 import Quokka.Types (ChildTable (..), Id (..), ParentTable (..))
-import Quokka.Functions (build1, build1With1Rel, insertStatement
+import Quokka.Functions (build1
+                        , build1With1Rel
+                        , id'
+                        , insertStatement
                         , insertStatementWith1Rel
                         , insertStatementWithManyRels)
 import Quokka.Helper (setupDb, withDatabaseConnection)
-import Quokka.Tables (accountTableAsChild, id', insertAccounts, insertProfiles, insertUsers, userTable)
+import Quokka.Tables (accountTableAsChild
+                     , insertAccounts
+                     , insertProfiles
+                     , insertUsers
+                     , userTable)
 import Test.Hspec
 
 

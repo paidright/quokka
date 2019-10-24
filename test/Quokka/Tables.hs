@@ -2,7 +2,6 @@
 
 module Quokka.Tables (
   accountTableAsChild
-, id'
 , insertAccounts
 , insertProfiles
 , insertUsers
@@ -59,8 +58,3 @@ insertProfiles
   -> IO [Id]
 insertProfiles conn =
   buildWithManyRels conn [userTable, accountTableAsParent] profileTable
-
-
-id' :: [Id] -> Int
-id' pids =
-  getId (head pids)
