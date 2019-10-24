@@ -1,10 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Quokka.Tables (
-  id'
+  accountTableAsChild
+, id'
 , insertAccounts
 , insertProfiles
 , insertUsers
+, userTable
 ) where
 
 import Database.PostgreSQL.Simple (Connection, ToRow)

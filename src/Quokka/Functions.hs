@@ -13,8 +13,11 @@
 
 module Quokka.Functions (
   build
+, build1
 , buildWith1Rel
+, build1With1Rel
 , buildWithManyRels
+, build1WithManyRels
 , delete
 , deleteStatement
 , insertStatement
@@ -26,7 +29,7 @@ module Quokka.Functions (
 import Data.Int (Int64)
 import Data.Text (intercalate)
 import Data.Text.Encoding (encodeUtf8)
-import Database.PostgreSQL.Simple (Connection, ToRow, execute_, returning)
+import Database.PostgreSQL.Simple (Connection, ToRow, execute_, returning, query)
 import Database.PostgreSQL.Simple.Types (Query (Query))
 import Quokka.Types (ChildTable (ChildTable)
                     , Id
@@ -50,6 +53,21 @@ build conn tbl =
   returning conn qry
 
 
+-- Similar to the build function but we only ever return
+-- a single optional result, and only take 1 value.
+build1
+  :: (ToRow q)
+  => Connection
+  -> ParentTable
+  -> q
+  -> IO (Maybe Id)
+build1 conn tbl =
+  let
+    qry = insertStatement tbl
+  in
+  fmap build1Helper . query conn qry
+
+
 -- Build a prepared statement for a child table with a single foreign
 -- key table
 buildWith1Rel
@@ -66,6 +84,22 @@ buildWith1Rel conn parent child =
   returning conn qry
 
 
+-- Build a prepared statement for a child table with a single foreign
+-- key table
+build1With1Rel
+  :: (ToRow q)
+  => Connection
+  -> ParentTable
+  -> ChildTable
+  -> q
+  -> IO (Maybe Id)
+build1With1Rel conn parent child =
+  let
+    qry = insertStatementWith1Rel parent child
+  in
+  fmap build1Helper . query conn qry
+
+
 -- Build a prepared statement for a child table with more than 1 parent
 buildWithManyRels
   :: (ToRow q)
@@ -79,6 +113,21 @@ buildWithManyRels conn parents child =
     qry = insertStatementWithManyRels parents child
   in
   returning conn qry
+
+
+-- Build a prepared statement for a child table with more than 1 parent
+build1WithManyRels
+  :: (ToRow q)
+  => Connection
+  -> [ParentTable]
+  -> ChildTable
+  -> q
+  -> IO (Maybe Id)
+build1WithManyRels conn parents child =
+  let
+    qry = insertStatementWithManyRels parents child
+  in
+  fmap build1Helper . query conn qry
 
 
 -- Perform a truncate with cascade action on the Table
@@ -147,6 +196,18 @@ deleteStatement
   -> Query
 deleteStatement (Table name) =
   Query (encodeUtf8 $ "truncate table " <> name <> " cascade;")
+
+
+-- Postgres Simple does not have a function which maps from [r] -> Maybe r
+-- so we've written one that takes the head or returns Nothing in a safe
+-- manner.
+build1Helper
+  :: [Id]
+  -> Maybe Id
+build1Helper (x:_) =
+  Just x
+build1Helper [] =
+  Nothing
 
 
 -- Function to map from IO [Id] -> IO [Result]

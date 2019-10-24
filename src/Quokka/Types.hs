@@ -30,13 +30,19 @@ import Database.PostgreSQL.Simple.ToField (toField, ToField)
 type Data = [Text]
 
 
+-- Represents the identity column of a row in a table. I.e. the
+-- primary key of a table which is limited to integers.
 newtype Id
   = Id { getId :: Int }
-
+      deriving (Eq, Show)
 
 instance FromRow Id where
   fromRow =
     Id <$> field
+
+instance ToField Id where
+  toField (Id val) =
+    toField val
 
 
 data ChildTable

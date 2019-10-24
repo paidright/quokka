@@ -4,15 +4,16 @@ module Quokka.CreateSpec (
   spec
 ) where
 
+import Data.Maybe (fromJust)
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8)
 import Database.PostgreSQL.Simple.Types (Query (Query))
-import Quokka.Types (ChildTable (..), ParentTable (..))
-import Quokka.Functions (insertStatement
+import Quokka.Types (ChildTable (..), Id (..), ParentTable (..))
+import Quokka.Functions (build1, build1With1Rel, insertStatement
                         , insertStatementWith1Rel
                         , insertStatementWithManyRels)
 import Quokka.Helper (setupDb, withDatabaseConnection)
-import Quokka.Tables (id', insertAccounts, insertProfiles, insertUsers)
+import Quokka.Tables (accountTableAsChild, id', insertAccounts, insertProfiles, insertUsers, userTable)
 import Test.Hspec
 
 
@@ -65,7 +66,27 @@ spec = do
 
 
   before_ setupDb $
-    around withDatabaseConnection $
+    around withDatabaseConnection $ do
+      describe "insert1" $ do
+        context "for a table with no relationships" $
+          it "should insert a single row into the database" $ \conn -> do
+            let insertUser = build1 conn userTable
+            userId <- insertUser ("John" :: Text, "Doe" :: Text, Just 1 :: Maybe Int)
+
+            userId `shouldBe` Just (Id 1)
+
+
+        context "for a table with a single relationship" $
+          it "should insert parent and child into the database" $ \conn -> do
+            let
+              insertUser    = build1 conn userTable
+              insertAccount = build1With1Rel conn userTable accountTableAsChild
+            userId    <- insertUser ("John" :: Text, "Doe" :: Text, 1 :: Int)
+            accountId <- insertAccount ("Account-1" :: Text, "Description" :: Text, fromJust userId)
+
+            accountId `shouldBe` Just (Id 1)
+
+
       describe "insert" $ do
         context "for a table with no relationships" $
           it "should insert data into the database" $ \conn -> do
