@@ -4,38 +4,16 @@ module Quokka.CreateSpec (
   spec
 ) where
 
-import Control.Exception (bracket)
-import Data.Text (Text, pack)
+import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8)
-import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Types (Query (Query))
-import Database.PostgreSQL.Simple.ToField (toField, ToField)
-import Quokka.Types (ChildTable (..), Id (..), ParentTable (..), Table (..), Result (..), Row (..))
-import Quokka.Functions (build, buildWith1Rel, delete, insertStatement, insertStatementWith1Rel, mapFromIdToResult)
+import Quokka.Types (ChildTable (..), ParentTable (..))
+import Quokka.Functions (insertStatement
+                        , insertStatementWith1Rel
+                        , insertStatementWithManyRels)
+import Quokka.Helper (setupDb, withDatabaseConnection)
+import Quokka.Tables (id', insertAccounts, insertProfiles, insertUsers)
 import Test.Hspec
-
-
-openConnection :: IO Connection
-openConnection =
-  connect defaultConnectInfo { connectPassword = "", connectDatabase = "quokka_test" }
-
-
-closeConnection :: Connection -> IO ()
-closeConnection =
-  close
-
-
-withDatabaseConnection :: (Connection -> IO ()) -> IO ()
-withDatabaseConnection =
-  bracket openConnection closeConnection
-
-
-flushDb :: IO ()
-flushDb = do
-  conn <- openConnection
-  _    <- delete conn (Table "users")
-  _    <- delete conn (Table "accounts")
-  closeConnection conn
 
 
 spec :: Spec
@@ -64,29 +42,55 @@ spec = do
 
       stmt `shouldBe` encodeUtf8 "insert into accounts (name,user_id) values (?,?) returning id;"
 
-  before_ flushDb $
+
+  describe "insertStatementWithManyRels" $ do
+    context "for 2 parent tables" $
+      it "should return an insert statement with 2 FKs set" $ do
+        let
+          parentTable1 = ParentTable "users" ["firstname", "lastname", "age"]
+          parentTable2 = ParentTable "accounts" ["name"]
+          childTable   = ChildTable "profiles" ["active"]
+          Query stmt   = insertStatementWithManyRels [parentTable1, parentTable2] childTable
+
+        stmt `shouldBe` encodeUtf8 "insert into profiles (active,user_id,account_id) values (?,?,?) returning id;"
+
+
+    context "for no parents" $
+      it "should return an insert statement with no FKs set" $ do
+        let
+          childTable   = ChildTable "profiles" ["active"]
+          Query stmt  = insertStatementWithManyRels [] childTable
+
+        stmt `shouldBe` encodeUtf8 "insert into profiles (active) values (?) returning id;"
+
+
+  before_ setupDb $
     around withDatabaseConnection $
       describe "insert" $ do
-        it "should insert data into the database" $ \conn -> do
-          let
-            table  = ParentTable "users" ["firstname", "lastname", "age"]
-            insert = build conn table
-          res  <- insert [
-              ("John" :: Text, "Doe" :: Text, Just 1 :: Maybe Int)
-            , ("Jane" :: Text, "Doe" :: Text, Nothing)]
+        context "for a table with no relationships" $
+          it "should insert data into the database" $ \conn -> do
+            userIds <- insertUsers conn [
+                ("John" :: Text, "Doe" :: Text, Just 1 :: Maybe Int)
+              , ("Jane" :: Text, "Doe" :: Text, Nothing)]
 
-          length res `shouldBe` 2
+            length userIds `shouldBe` 2
 
 
-        it "should insert parent and child into the database" $ \conn -> do
-          let
-            parentTable = ParentTable "users" ["firstname", "lastname", "age"]
-            childTable  = ChildTable "accounts" ["name", "account_id"]
-            insert      = build conn parentTable
-            insertRel   = buildWith1Rel conn parentTable childTable
-            pid pids    = getId (head pids)
-          pids <- insert [("John" :: Text, "Doe" :: Text, 1 :: Int)]
-          cids <- insertRel [("Account-1" :: Text, 2 :: Int, pid pids)]
+        context "for a table with a single relationship" $
+          it "should insert parent and child into the database" $ \conn -> do
+            userIds    <- insertUsers conn [("John" :: Text, "Doe" :: Text, 1 :: Int)]
+            accountIds <- insertAccounts conn [("Account-1" :: Text, "Description" :: Text, id' userIds)]
 
-          length pids `shouldBe` 1
-          length cids `shouldBe` 1
+            length userIds `shouldBe` 1
+            length accountIds `shouldBe` 1
+
+
+        context "for a table with multiple relationships" $
+          it "should insert parent and children into the database" $ \conn -> do
+            userIds    <- insertUsers conn [("John" :: Text, "Doe" :: Text, 1 :: Int)]
+            accountIds <- insertAccounts conn [("Account-1" :: Text, "Description" :: Text, id' userIds)]
+            profileIds <- insertProfiles conn [(True :: Bool, id' userIds, id' accountIds)]
+
+            length userIds `shouldBe` 1
+            length accountIds `shouldBe` 1
+            length profileIds `shouldBe` 1

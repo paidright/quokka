@@ -3,10 +3,12 @@
 module Quokka.Functions (
   build
 , buildWith1Rel
+, buildWithManyRels
 , delete
 , deleteStatement
 , insertStatement
 , insertStatementWith1Rel
+, insertStatementWithManyRels
 , mapFromIdToResult
 ) where
 
@@ -15,7 +17,11 @@ import Data.Text (intercalate)
 import Data.Text.Encoding (encodeUtf8)
 import Database.PostgreSQL.Simple (Connection, ToRow, execute_, returning)
 import Database.PostgreSQL.Simple.Types (Query (Query))
-import Quokka.Types (ChildTable (ChildTable), Id (getId), ParentTable (ParentTable), Table (..), Result (SingleResult))
+import Quokka.Types (ChildTable (ChildTable)
+                    , Id
+                    , ParentTable (ParentTable)
+                    , Table (Table)
+                    , Result (SingleResult))
 import Quokka.Text.Countable (singularize)
 
 
@@ -45,6 +51,21 @@ buildWith1Rel
 buildWith1Rel conn parent child =
   let
     qry = insertStatementWith1Rel parent child
+  in
+  returning conn qry
+
+
+-- Build a prepared statement for a child table with more than 1 parent
+buildWithManyRels
+  :: (ToRow q)
+  => Connection
+  -> [ParentTable]
+  -> ChildTable
+  -> [q]
+  -> IO [Id]
+buildWithManyRels conn parents child =
+  let
+    qry = insertStatementWithManyRels parents child
   in
   returning conn qry
 
@@ -81,9 +102,19 @@ insertStatementWith1Rel
   :: ParentTable
   -> ChildTable
   -> Query
-insertStatementWith1Rel (ParentTable parentName _) (ChildTable name columns) =
+insertStatementWith1Rel parent =
+  insertStatementWithManyRels [parent]
+
+
+-- Creates an insert statement for a table, and uses multiple parent tables to also incude
+-- foreign keys in the generation of the statement.
+insertStatementWithManyRels
+  :: [ParentTable]
+  -> ChildTable
+  -> Query
+insertStatementWithManyRels parents (ChildTable name columns) =
   let
-    updatedColumns = columns ++ [singularize parentName <> "_id"]
+    updatedColumns = columns ++ map (\(ParentTable parentName _) -> singularize parentName <> "_id") parents
     columnsAsText = intercalate "," updatedColumns
     valuesAsText  = intercalate "," (map (const "?") updatedColumns)
     baseInsert    = "insert into " <> name <> " (" <> columnsAsText <> ")"
