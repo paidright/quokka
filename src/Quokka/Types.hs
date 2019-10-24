@@ -1,3 +1,15 @@
+-- |
+-- Module      :  Quokka.Types
+-- Copyright   :  © 2019 Shirren Premaratne
+-- License     :  MIT
+--
+-- Maintainer  :  Shirren Premaratne <shirren.premaratne@gmail.com>
+-- Stability   :  stable
+-- Portability :  portable
+--
+-- Types used by the Functions to generate test data and represent data
+-- and relational associations.
+
 module Quokka.Types (
   ChildTable (..)
 , Data

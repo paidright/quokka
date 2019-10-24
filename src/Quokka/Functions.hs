@@ -1,3 +1,14 @@
+-- |
+-- Module      :  Quokka.Functions
+-- Copyright   :  © 2019 Shirren Premaratne
+-- License     :  MIT
+--
+-- Maintainer  :  Shirren Premaratne <shirren.premaratne@gmail.com>
+-- Stability   :  stable
+-- Portability :  portable
+--
+-- Functions to generate Postgres data via the postgres-simple library.
+
 {-# LANGUAGE OverloadedStrings #-}
 
 module Quokka.Functions (

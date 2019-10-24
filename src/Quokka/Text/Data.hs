@@ -1,3 +1,18 @@
+-- |
+-- Module      :  Text.Countable
+-- Copyright   :  © 2016 Brady Ouren
+-- License     :  MIT
+--
+-- Maintainer  :  Brady Ouren <brady.ouren@gmail.com>
+-- Stability   :  stable
+-- Portability :  portable
+--
+-- pluralization and singularization transformations
+--
+-- Note: This library is portable in the sense of haskell extensions
+-- however, it is _not_ portable in the sense of requiring PCRE regex
+-- bindings on the system
+
 {-# LANGUAGE OverloadedStrings #-}
 
 module Quokka.Text.Data where
