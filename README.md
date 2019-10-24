@@ -4,6 +4,8 @@ Is a small library that helps developers generate test data for the purpose
 of writing test/specs against there code which read and write data to the
 database.
 
+![Quokka](quokka.jpg)
+
 ## Limitations
 
 This library is in a beta stage and is authored to work with a very specific
