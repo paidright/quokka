@@ -25,6 +25,57 @@ project I was working on, and as such has some technical dependencies listed bel
 
 ## Getting Started
 
+To get started you will need to run the script `./bin/db-refresh`, this script will
+requires an up and running Postgres server which can be installed by following the
+steps below;
+
+### Postgres Install / Configure
+
+#### OS-X
+
+```
+## install postgresql
+brew install postgresql
+
+## to initialize (once only)
+initdb /usr/local/var/postgres -E utf8
+
+## to start
+pg_ctl -D /usr/local/var/postgres -l /usr/local/var/postgres/server.log start
+
+## to stop
+pg_ctl -D /usr/local/var/postgres stop -s -m fast
+```
+
+Setting up DB for tests.
+
+```
+./bin/db-refresh
+```
+
+#### Linux (Debian)
+
+```
+## install postgresql
+apt-get install postgresql postgresql-client libpq-dev
+
+# For the bin/db* scripts to work you have to setup your user to have superuser permissions
+# Something like:
+
+# Login as the default database user postgres
+sudo -u postgres bash
+
+# Start the client
+psql
+
+# Create a user with your username and set permissions
+create user <your-username>;
+alter role <your-username> with superuser;
+alter user <your-username> with encrypted password '<password>';
+```
+
+## Breakdown
+
 If you are the type of person that feels reading documentation is a waste of time,
 then I highly recommend you look in the test folder of this project to learn
 how to use this particular library, otherwise please read on.

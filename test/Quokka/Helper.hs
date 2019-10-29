@@ -9,6 +9,7 @@ module Quokka.Helper (
 ) where
 
 import Control.Exception (bracket)
+import Data.Functor (void)
 import Data.Int (Int64)
 import Database.PostgreSQL.Simple
 import Quokka.Functions (delete)
@@ -18,8 +19,9 @@ import Text.RawString.QQ
 
 openConnection :: IO Connection
 openConnection =
-  connect defaultConnectInfo { connectPassword = ""
+  connect defaultConnectInfo { connectPassword = "quokka_test"
                              , connectDatabase = "quokka_test"
+                             , connectUser = "quokka_test"
                              }
 
 
@@ -36,32 +38,33 @@ withDatabaseConnection =
 setupDb :: IO ()
 setupDb = do
   conn <- openConnection
-  _    <- buildTables conn
+  void $ buildTables conn
   flushDb conn
 
 
 flushDb :: Connection -> IO ()
 flushDb conn = do
-  _    <- delete conn (Table "users")
-  _    <- delete conn (Table "accounts")
-  _    <- delete conn (Table "profiles")
+  void $ delete conn (Table "users")
+  void $ delete conn (Table "accounts")
+  void $ delete conn (Table "profiles")
   closeConnection conn
 
 
 buildTables :: Connection -> IO Int64
 buildTables conn = do
-  _    <- execute_ conn [r|create table if not exists users (
+  void $ execute_ conn [r|create table if not exists users (
                              id serial primary key
                            , firstname text
                            , lastname text
                            , age integer);|]
-  _    <- execute_ conn [r|create table if not exists profiles (
-                             id serial primary key
-                           , active boolean
-                           , user_id integer references users(id)
-                           , account_id integer references accounts(id));|]
-  execute_ conn [r|create table if not exists accounts (
+  void $ execute_ conn [r|create table if not exists accounts (
                             id serial primary key
                           , name text
                           , description text
                           , user_id integer references users(id));|]
+  execute_ conn [r|create table if not exists profiles (
+                             id serial primary key
+                           , active boolean
+                           , user_id integer references users(id)
+                           , account_id integer references accounts(id));|]
+

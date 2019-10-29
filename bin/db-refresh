@@ -1,0 +1,10 @@
+#!/bin/sh -eux
+
+dropdb quokka_test || true
+createuser -S -d -R quokka_test || true
+createdb quokka_test
+
+# Create the user account
+echo "alter user quokka_test with SUPERUSER;" | psql quokka_test
+echo "alter user quokka_test with encrypted password 'quokka_test';" | psql quokka_test
+echo "grant all privileges on database quokka_test to quokka_test;" | psql quokka_test
