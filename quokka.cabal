@@ -12,9 +12,11 @@ category:            Database, Testing
 extra-source-files:  CHANGELOG.md
                      LICENSE
 synopsis:
-  Testing helpers for projects that use postgresql
+  Test helpers which help generate data for projects that use postgresql.
 description:
-  Quokka is a library of testing helpers for projects that use postgresql.
+  Quokka is a library that helps generate test data for projects that use postgresql. The
+  generated test data is inserted into Postgres for access by libraries such as Beam, Traction
+  and postgresql-simple etc.
 
 source-repository head
   type: git
