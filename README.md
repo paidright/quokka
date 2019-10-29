@@ -1,31 +1,31 @@
 # Quokka
 
 Is a small library that helps developers generate test data for the purpose
-of writing test/specs against there code which read and write data to the
+of writing test/specs against their code which read and write data to the
 database.
 
 ![Quokka](quokka.jpg)
 
 ## Limitations
 
-This library is in a beta stage and is authored to work with a very specific
-project we were working on, and as such has some technical dependencies listed below;
+This library currently makes some technical assumptions listed below. Some of these may
+be addressed in a future version.
 
 * This library only works with Postgres version 9.1+. It uses the Haskell `postgresql-simple`
   library.
 * It only works with tables that uses the `Integer` type for the primary key, and
   by virtue foreign keys which are based on the same type.
 * It also relies on schemas which follow certain conventions;
-  ** Primary keys in your database need to be of type `Integer`, and also need to
+  * Primary keys in your database need to be of type `Integer`, and also need to
      be named `Id`.
-  ** Foreign keys need to be named using the convention `tableName_id` where tableName
+  * Foreign keys need to be named using the convention `tableName_id` where tableName
      is the singular form of the table name. So for example if you have a `users` table
      and an `accounts` table, and the `users` table has a foreign key to the accounts
      table, then the foreign key in the `accounts` table needs to be named `user_id`.
 
 ## Getting Started
 
-To get started you will need to run the script `./bin/db-refresh`, this script will
+To get started you will need to run the script `./bin/db-refresh`, this script
 requires an up and running Postgres server which can be installed by following the
 steps below;
 
@@ -85,7 +85,7 @@ tables. The `ParentTable` type represents a table in your relational database th
 has no foreign keys, and has a primary key column named `Id` of type `Integer`.
 The `ChildTable` type is table in your relational database that has 1 or more
 foreign keys, and has  a primary key column named `Id` of type `Integer`. As mentioned
-in the [Limitations](##Limitations) section foreign keys need to be named using
+in the [Limitations](##Limitations) section foreign keys currently need to be named using
 a particular convention.
 
 Here are few examples of how to define your tables;
