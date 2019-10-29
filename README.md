@@ -9,7 +9,7 @@ database.
 ## Limitations
 
 This library is in a beta stage and is authored to work with a very specific
-project I was working on, and as such has some technical dependencies listed below;
+project we were working on, and as such has some technical dependencies listed below;
 
 * This library only works with Postgres version 9.1+. It uses the Haskell `postgresql-simple`
   library.
