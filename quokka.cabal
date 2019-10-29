@@ -1,13 +1,13 @@
 cabal-version:       >=1.10
 name:                quokka
-version:             0.1.0.0
+version:             0.1.1
 license:             MIT
 license-file:        LICENSE
 author:              Shirren Premaratne
 maintainer:          shirren.premaratne@gmail.com
 build-type:          Simple
-homepage:            https://github.com/shirren/quokka
-bug-reports:         https://github.com/shirren/quokka/issues
+homepage:            https://github.com/paidright/quokka
+bug-reports:         https://github.com/paidright/quokka/issues
 category:            Database, Testing
 extra-source-files:  CHANGELOG.md
                      LICENSE
@@ -20,7 +20,7 @@ description:
 
 source-repository head
   type: git
-  location: https://github.com/shirren/quokka.git
+  location: https://github.com/paidright/quokka.git
 
 library
   exposed-modules:     Quokka.Functions
@@ -56,5 +56,4 @@ test-suite quokka-test
   ghc-options:         -Wall
                        -Wincomplete-record-updates
                        -Wincomplete-uni-patterns
-                       -- -Wmissing-import-lists
                        -threaded
