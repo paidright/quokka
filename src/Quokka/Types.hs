@@ -68,7 +68,7 @@ newtype Table
 -- to one another. The relationship is mapped through a foreign
 -- key (FK).
 data Relation
-  = Relation ParentTable ChildTable FK
+  = Relation ParentTable FK
 
 
 -- | Column that represents a foreign key in a database.

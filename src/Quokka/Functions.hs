@@ -24,6 +24,7 @@ module Quokka.Functions (
 , insertStatement
 , insertStatementWith1Rel
 , insertStatementWithManyRels
+, insertStatementWithManyCustomRels 
 , mapFromIdToResult
 ) where
 
@@ -34,9 +35,11 @@ import Data.Text.Encoding (encodeUtf8)
 import Database.PostgreSQL.Simple (Connection, ToRow, execute_, returning, query)
 import Database.PostgreSQL.Simple.Types (Query (Query))
 import Quokka.Types (ChildTable (ChildTable)
+                    , FK (FK)
                     , Id (getId)
                     , ParentTable (ParentTable)
                     , Table (Table)
+                    , Relation (Relation)
                     , Result (SingleResult))
 import Quokka.Text.Countable (singularize)
 
@@ -174,12 +177,26 @@ insertStatementWithManyRels
   :: [ParentTable]
   -> ChildTable
   -> Query
-insertStatementWithManyRels parents (ChildTable name columns) =
+insertStatementWithManyRels parents child =
   let
-    updatedColumns = columns ++ map (\(ParentTable parentName _) -> singularize parentName <> "_id") parents
-    columnsAsText = intercalate "," updatedColumns
-    valuesAsText  = intercalate "," (map (const "?") updatedColumns)
-    baseInsert    = "insert into " <> name <> " (" <> columnsAsText <> ")"
+    buildFK name = FK (singularize name <> "_id")
+    relations    = map (\p@(ParentTable name _) -> Relation p (buildFK name)) parents
+  in
+  insertStatementWithManyCustomRels relations child
+
+
+-- | Creates an insert statement for a table where the relationship between the parent and child
+-- is modelled using a custom key.
+insertStatementWithManyCustomRels
+  :: [Relation]
+  -> ChildTable
+  -> Query
+insertStatementWithManyCustomRels relations (ChildTable name columns) =
+  let
+    updatedColumns = columns ++ map (\(Relation _ (FK fkName)) -> fkName) relations
+    columnsAsText  = intercalate "," updatedColumns
+    valuesAsText   = intercalate "," (map (const "?") updatedColumns)
+    baseInsert     = "insert into " <> name <> " (" <> columnsAsText <> ")"
   in
   Query (encodeUtf8 $ baseInsert <> " values (" <> valuesAsText <> ") returning id;")
 

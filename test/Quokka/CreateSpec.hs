@@ -8,13 +8,14 @@ import Data.Maybe (fromJust)
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8)
 import Database.PostgreSQL.Simple.Types (Query (Query))
-import Quokka.Types (ChildTable (..), Id (..), ParentTable (..))
+import Quokka.Types (ChildTable (..), FK (..), Id (..), ParentTable (..), Relation (..))
 import Quokka.Functions (build1
                         , build1With1Rel
                         , id'
                         , insertStatement
                         , insertStatementWith1Rel
-                        , insertStatementWithManyRels)
+                        , insertStatementWithManyRels
+                        , insertStatementWithManyCustomRels)
 import Quokka.Helper (setupDb, withDatabaseConnection)
 import Quokka.Tables (accountTableAsChild
                      , insertAccounts
@@ -50,6 +51,27 @@ spec = do
 
       stmt `shouldBe` encodeUtf8 "insert into accounts (name,user_id) values (?,?) returning id;"
 
+  
+  describe "insertStatementWithManyCustomRels" $ do
+    context "for 2 parent tables" $
+      it "should return an insert statement with 2 custom FKs set" $ do
+        let
+          parentTable1 = ParentTable "users" ["firstname", "lastname", "age"]
+          parentTable2 = ParentTable "accounts" ["name"]
+          childTable   = ChildTable "profiles" ["active"]
+          Query stmt   = insertStatementWithManyCustomRels 
+                          [Relation parentTable1 (FK "userfk"), Relation parentTable2 (FK "accountfk")]
+                          childTable
+
+        stmt `shouldBe` encodeUtf8 "insert into profiles (active,userfk,accountfk) values (?,?,?) returning id;"
+    
+    context "for no parents" $
+      it "should return an insert statement with no FKs set" $ do
+        let
+          childTable   = ChildTable "profiles" ["active"]
+          Query stmt  = insertStatementWithManyCustomRels [] childTable
+
+        stmt `shouldBe` encodeUtf8 "insert into profiles (active) values (?) returning id;"
 
   describe "insertStatementWithManyRels" $ do
     context "for 2 parent tables" $
