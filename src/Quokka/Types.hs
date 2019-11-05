@@ -13,9 +13,11 @@
 module Quokka.Types (
   ChildTable (..)
 , Data
+, FK (..)
 , Id (..)
 , ParentTable (..)
 , Table (..)
+, Relation (..)
 , Result (..)
 , Row (..)
 ) where
@@ -27,10 +29,11 @@ import Database.PostgreSQL.Simple.ToRow (toRow)
 import Database.PostgreSQL.Simple.ToField (toField, ToField)
 
 
+-- | Alias for a list of values.
 type Data = [Text]
 
 
--- Represents the identity column of a row in a table. I.e. the
+-- | Represents the identity column of a row in a table. I.e. the
 -- primary key of a table which is limited to integers.
 newtype Id
   = Id { getId :: Int }
@@ -45,21 +48,40 @@ instance ToField Id where
     toField val
 
 
+-- | A child table represents a relation in Postgres with a foreign key
+-- to a parent table.
 data ChildTable
   = ChildTable Text [Text]
 
 
+-- | A parent table represents a relation in Postgres with no foreign keys.
 data ParentTable
   = ParentTable Text [Text]
 
 
+-- | This type is used to model and create deletes.
 newtype Table
   = Table Text
 
+
+-- | A relation is defined as two tables with a relationship
+-- to one another. The relationship is mapped through a foreign
+-- key (FK).
+data Relation
+  = Relation ParentTable ChildTable FK
+
+
+-- | Column that represents a foreign key in a database.
+newtype FK
+  = FK Text
+
+
+-- | Represents a result retrieved by Quokka via Postgres-simple.
 data Result
   = SingleResult ParentTable Id
 
 
+-- | A row represents a Postgres row retrieved for a relation.
 newtype Row a
   = Row [a]
 

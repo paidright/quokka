@@ -27,6 +27,7 @@ module Quokka.Functions (
 , mapFromIdToResult
 ) where
 
+import Data.Functor (void)
 import Data.Int (Int64)
 import Data.Text (intercalate)
 import Data.Text.Encoding (encodeUtf8)
@@ -40,7 +41,7 @@ import Quokka.Types (ChildTable (ChildTable)
 import Quokka.Text.Countable (singularize)
 
 
--- Build a prepared statement to insert data into the database`
+-- | Build a prepared statement to insert data into the database`
 build
   :: (ToRow q)
   => Connection
@@ -54,7 +55,7 @@ build conn tbl =
   returning conn qry
 
 
--- Similar to the build function but we only ever return
+-- | Similar to the build function but we only ever return
 -- a single optional result, and only take 1 value.
 build1
   :: (ToRow q)
@@ -69,7 +70,7 @@ build1 conn tbl =
   fmap build1Helper . query conn qry
 
 
--- Build a prepared statement for a child table with a single foreign
+-- | Build a prepared statement for a child table with a single foreign
 -- key table
 buildWith1Rel
   :: (ToRow q)
@@ -85,7 +86,7 @@ buildWith1Rel conn parent child =
   returning conn qry
 
 
--- Build a prepared statement for a child table with a single foreign
+-- | Build a prepared statement for a child table with a single foreign
 -- key table
 build1With1Rel
   :: (ToRow q)
@@ -101,7 +102,7 @@ build1With1Rel conn parent child =
   fmap build1Helper . query conn qry
 
 
--- Build a prepared statement for a child table with more than 1 parent
+-- | Build a prepared statement for a child table with more than 1 parent
 buildWithManyRels
   :: (ToRow q)
   => Connection
@@ -116,7 +117,7 @@ buildWithManyRels conn parents child =
   returning conn qry
 
 
--- Build a prepared statement for a child table with more than 1 parent
+-- | Build a prepared statement for a child table with more than 1 parent
 build1WithManyRels
   :: (ToRow q)
   => Connection
@@ -131,7 +132,7 @@ build1WithManyRels conn parents child =
   fmap build1Helper . query conn qry
 
 
--- Perform a truncate with cascade action on the Table
+-- | Perform a truncate with cascade action on the Table
 delete
   :: Connection
   -> Table
@@ -140,11 +141,11 @@ delete conn tbl = do
   let
     alter = alterSequenceStatement tbl
     qry   = deleteStatement tbl
-  _ <- execute_ conn alter
+  void $ execute_ conn alter
   execute_ conn qry
 
 
--- Create an insert statement for a table
+-- | Create an insert statement for a table
 insertStatement
   :: ParentTable
   -> Query
@@ -157,7 +158,7 @@ insertStatement (ParentTable name columns) =
   Query (encodeUtf8 $ baseInsert <> " values (" <> valuesAsText <> ") returning id;")
 
 
--- Creates an insert statement for a table, and uses the parent table to also incude
+-- | Creates an insert statement for a table, and uses the parent table to also incude
 -- a foreign key in the generation of the statement.
 insertStatementWith1Rel
   :: ParentTable
@@ -167,7 +168,7 @@ insertStatementWith1Rel parent =
   insertStatementWithManyRels [parent]
 
 
--- Creates an insert statement for a table, and uses multiple parent tables to also incude
+-- | Creates an insert statement for a table, and uses multiple parent tables to also include
 -- foreign keys in the generation of the statement.
 insertStatementWithManyRels
   :: [ParentTable]
@@ -183,7 +184,7 @@ insertStatementWithManyRels parents (ChildTable name columns) =
   Query (encodeUtf8 $ baseInsert <> " values (" <> valuesAsText <> ") returning id;")
 
 
--- Generate an alter sequence statement for a table
+-- | Generate an alter sequence statement for a table
 alterSequenceStatement
   :: Table
   -> Query
@@ -191,7 +192,7 @@ alterSequenceStatement (Table name) =
   Query (encodeUtf8 $ "alter sequence " <> name <> "_id_seq restart;")
 
 
--- Generate a delete statement for a table
+-- | Generate a delete statement for a table
 deleteStatement
   :: Table
   -> Query
@@ -199,7 +200,7 @@ deleteStatement (Table name) =
   Query (encodeUtf8 $ "truncate table " <> name <> " cascade;")
 
 
--- Helper function to extract the underlying Int value from
+-- | Helper function to extract the underlying Int value from
 -- the first value in the list
 id' :: [Id] -> Int
 id' (x:_) =
@@ -207,7 +208,7 @@ id' (x:_) =
 id' [] =
   -1
 
--- Postgres Simple does not have a function which maps from [r] -> Maybe r
+-- | Postgres Simple does not have a function which maps from [r] -> Maybe r
 -- so we've written one that takes the head or returns Nothing in a safe
 -- manner.
 build1Helper
@@ -219,7 +220,7 @@ build1Helper [] =
   Nothing
 
 
--- Function to map from IO [Id] -> IO [Result]
+-- | Function to map from IO [Id] -> IO [Result]
 mapFromIdToResult
   :: ParentTable
   -> [Id]
