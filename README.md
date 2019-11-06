@@ -129,8 +129,8 @@ factory to create the data.
 
 ### Populating Child Tables
 
-Populating child tables requires the resolution of foreign keys. `Quokka` is
-aware of relationships through the `ChildTable` type. This type captures the
+Populating child tables requires the resolution of foreign keys. `Quokka`
+derives relationships through the `ParentTable` type. This type captures the
 related table through the type thereby faciliating a mechanism through which
 child rows can be inserted into the table. The following example demonstrates
 how to define a function to insert child rows, and then how to use the
@@ -147,6 +147,21 @@ accountIds <- insertAccounts conn [("Johns Account" :: Text, "Description" :: Te
 The function `id'` is a helper function available in the library to extract the
 foreign key value of the parent entity when generating the `insert` statement
 for the database.
+
+#### Custom Foreign Key Columns
+
+When we use functions like `buildWith1Rel` `Quokka` relies on a simple convention when
+generating insert statements to populate foreign key columns. This convention will
+not suit all scenarios. For schemas which have foreign keys which do not follow convention
+`Quokka` comes with alternate functions such as `buildWith1CustomRel`. Let's look at
+a concrete example to better understand what we are saying. Let's take two tables `users`
+and `accounts`. If the `accounts` table has a foreign key named `user_id` to the `users`
+table then to populate both `users` and `accounts` we can use the function `buildWith1Rel`.
+But if the `accounts` table has a foreign key column named `usersid` then the function
+`buildWith1Rel` will fail as it will try to insert the foreign key into the column `user_id`.
+So in this case we use the function `buildWith1CustomRel`, this function takes a `Relation` as
+an argument. The `Relation` type takes the `ParentTable` and the `FK` type in its constructor,
+and we set the name of the foreign key column in the `FK` type.
 
 ### Populating Associate Tables
 

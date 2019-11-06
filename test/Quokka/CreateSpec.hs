@@ -11,6 +11,7 @@ import Database.PostgreSQL.Simple.Types (Query (Query))
 import Quokka.Types (ChildTable (..), FK (..), Id (..), ParentTable (..), Relation (..))
 import Quokka.Functions (build1
                         , build1With1Rel
+                        , build1With1CustomRel
                         , id'
                         , insertStatement
                         , insertStatementWith1Rel
@@ -126,6 +127,18 @@ spec = do
 
             accountId `shouldBe` Just (Id 1)
 
+
+        context "for a table with a single custom relationship" $
+          it "should insert parent and child into the database" $ \conn -> do
+            let
+              insertUser    = build1 conn userTable
+              customRel     = Relation userTable (FK "user_id")
+              insertAccount = build1With1CustomRel conn customRel accountTableAsChild
+            userId    <- insertUser ("John" :: Text, "Doe" :: Text, 1 :: Int)
+            accountId <- insertAccount ("Account-1" :: Text, "Description" :: Text, fromJust userId)
+
+            accountId `shouldBe` Just (Id 1)
+      
 
       describe "insert" $ do
         context "for a table with no relationships" $
