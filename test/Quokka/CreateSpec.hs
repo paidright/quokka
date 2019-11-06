@@ -14,6 +14,7 @@ import Quokka.Functions (build1
                         , id'
                         , insertStatement
                         , insertStatementWith1Rel
+                        , insertStatementWith1CustomRel
                         , insertStatementWithManyRels
                         , insertStatementWithManyCustomRels)
 import Quokka.Helper (setupDb, withDatabaseConnection)
@@ -52,6 +53,16 @@ spec = do
       stmt `shouldBe` encodeUtf8 "insert into accounts (name,user_id) values (?,?) returning id;"
 
   
+  describe "insertStatementWith1CustomRel" $
+    it "should return an insert statement with the custom FK set" $ do
+      let
+        relation    = Relation (ParentTable "users" ["firstname", "lastname", "age"]) (FK "user")
+        childTable  = ChildTable "accounts" ["name"]
+        Query stmt  = insertStatementWith1CustomRel relation childTable
+
+      stmt `shouldBe` encodeUtf8 "insert into accounts (name,user) values (?,?) returning id;"
+
+
   describe "insertStatementWithManyCustomRels" $ do
     context "for 2 parent tables" $
       it "should return an insert statement with 2 custom FKs set" $ do

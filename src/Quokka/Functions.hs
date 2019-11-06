@@ -15,14 +15,19 @@ module Quokka.Functions (
   build
 , build1
 , buildWith1Rel
+, buildWith1CustomRel
 , build1With1Rel
+, build1With1CustomRel
 , buildWithManyRels
+, buildWithManyCustomRels
 , build1WithManyRels
+, build1WithManyCustomRels
 , delete
 , deleteStatement
 , id'
 , insertStatement
 , insertStatementWith1Rel
+, insertStatementWith1CustomRel
 , insertStatementWithManyRels
 , insertStatementWithManyCustomRels 
 , mapFromIdToResult
@@ -74,7 +79,7 @@ build1 conn tbl =
 
 
 -- | Build a prepared statement for a child table with a single foreign
--- key table
+-- key to the nominated parent table. 
 buildWith1Rel
   :: (ToRow q)
   => Connection
@@ -85,6 +90,22 @@ buildWith1Rel
 buildWith1Rel conn parent child =
   let
     qry = insertStatementWith1Rel parent child
+  in
+  returning conn qry
+
+
+-- | Build a prepared statement for a child table with a single foreign
+-- key to the nominated parent table through a custom relation.
+buildWith1CustomRel
+  :: (ToRow q)
+  => Connection
+  -> Relation 
+  -> ChildTable
+  -> [q]
+  -> IO [Id]
+buildWith1CustomRel conn relation child =
+  let
+    qry = insertStatementWith1CustomRel relation child
   in
   returning conn qry
 
@@ -105,6 +126,22 @@ build1With1Rel conn parent child =
   fmap build1Helper . query conn qry
 
 
+-- | Build a prepared statement for a child table with a single foreign
+-- key table mapped through a custom relation.
+build1With1CustomRel
+  :: (ToRow q)
+  => Connection
+  -> Relation 
+  -> ChildTable
+  -> q
+  -> IO (Maybe Id)
+build1With1CustomRel conn relation child =
+  let
+    qry = insertStatementWith1CustomRel relation child
+  in
+  fmap build1Helper . query conn qry
+
+
 -- | Build a prepared statement for a child table with more than 1 parent
 buildWithManyRels
   :: (ToRow q)
@@ -121,6 +158,22 @@ buildWithManyRels conn parents child =
 
 
 -- | Build a prepared statement for a child table with more than 1 parent
+-- mapped through a custom relation.
+buildWithManyCustomRels
+  :: (ToRow q)
+  => Connection
+  -> [Relation]
+  -> ChildTable
+  -> [q]
+  -> IO [Id]
+buildWithManyCustomRels conn relations child =
+  let
+    qry = insertStatementWithManyCustomRels relations child
+  in
+  returning conn qry
+
+
+-- | Build a prepared statement for a child table with more than 1 parent
 build1WithManyRels
   :: (ToRow q)
   => Connection
@@ -131,6 +184,22 @@ build1WithManyRels
 build1WithManyRels conn parents child =
   let
     qry = insertStatementWithManyRels parents child
+  in
+  fmap build1Helper . query conn qry
+
+
+-- | Build a prepared statement for a child table with more than 1 parent mapped
+-- through a custom relation.
+build1WithManyCustomRels
+  :: (ToRow q)
+  => Connection
+  -> [Relation]
+  -> ChildTable
+  -> q
+  -> IO (Maybe Id)
+build1WithManyCustomRels conn relations child =
+  let
+    qry = insertStatementWithManyCustomRels relations child
   in
   fmap build1Helper . query conn qry
 
@@ -169,6 +238,16 @@ insertStatementWith1Rel
   -> Query
 insertStatementWith1Rel parent =
   insertStatementWithManyRels [parent]
+
+
+-- | Creates an insert statement for a table, and uses the parent table custom relation
+-- to build an insert statement for a child table using the relation
+insertStatementWith1CustomRel
+  :: Relation
+  -> ChildTable
+  -> Query
+insertStatementWith1CustomRel relation =
+  insertStatementWithManyCustomRels [relation]
 
 
 -- | Creates an insert statement for a table, and uses multiple parent tables to also include

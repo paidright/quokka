@@ -64,9 +64,8 @@ newtype Table
   = Table Text
 
 
--- | A relation is defined as two tables with a relationship
--- to one another. The relationship is mapped through a foreign
--- key (FK).
+-- | A relation is defined as a parent table that is related
+-- through a custom foreign key.
 data Relation
   = Relation ParentTable FK
 
