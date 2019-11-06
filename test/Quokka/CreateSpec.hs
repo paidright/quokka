@@ -8,13 +8,16 @@ import Data.Maybe (fromJust)
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8)
 import Database.PostgreSQL.Simple.Types (Query (Query))
-import Quokka.Types (ChildTable (..), Id (..), ParentTable (..))
+import Quokka.Types (ChildTable (..), FK (..), Id (..), ParentTable (..), Relation (..))
 import Quokka.Functions (build1
                         , build1With1Rel
+                        , build1With1CustomRel
                         , id'
                         , insertStatement
                         , insertStatementWith1Rel
-                        , insertStatementWithManyRels)
+                        , insertStatementWith1CustomRel
+                        , insertStatementWithManyRels
+                        , insertStatementWithManyCustomRels)
 import Quokka.Helper (setupDb, withDatabaseConnection)
 import Quokka.Tables (accountTableAsChild
                      , insertAccounts
@@ -50,6 +53,37 @@ spec = do
 
       stmt `shouldBe` encodeUtf8 "insert into accounts (name,user_id) values (?,?) returning id;"
 
+  
+  describe "insertStatementWith1CustomRel" $
+    it "should return an insert statement with the custom FK set" $ do
+      let
+        relation    = Relation (ParentTable "users" ["firstname", "lastname", "age"]) (FK "user")
+        childTable  = ChildTable "accounts" ["name"]
+        Query stmt  = insertStatementWith1CustomRel relation childTable
+
+      stmt `shouldBe` encodeUtf8 "insert into accounts (name,user) values (?,?) returning id;"
+
+
+  describe "insertStatementWithManyCustomRels" $ do
+    context "for 2 parent tables" $
+      it "should return an insert statement with 2 custom FKs set" $ do
+        let
+          parentTable1 = ParentTable "users" ["firstname", "lastname", "age"]
+          parentTable2 = ParentTable "accounts" ["name"]
+          childTable   = ChildTable "profiles" ["active"]
+          Query stmt   = insertStatementWithManyCustomRels 
+                          [Relation parentTable1 (FK "userfk"), Relation parentTable2 (FK "accountfk")]
+                          childTable
+
+        stmt `shouldBe` encodeUtf8 "insert into profiles (active,userfk,accountfk) values (?,?,?) returning id;"
+    
+    context "for no parents" $
+      it "should return an insert statement with no FKs set" $ do
+        let
+          childTable   = ChildTable "profiles" ["active"]
+          Query stmt  = insertStatementWithManyCustomRels [] childTable
+
+        stmt `shouldBe` encodeUtf8 "insert into profiles (active) values (?) returning id;"
 
   describe "insertStatementWithManyRels" $ do
     context "for 2 parent tables" $
@@ -93,6 +127,18 @@ spec = do
 
             accountId `shouldBe` Just (Id 1)
 
+
+        context "for a table with a single custom relationship" $
+          it "should insert parent and child into the database" $ \conn -> do
+            let
+              insertUser    = build1 conn userTable
+              customRel     = Relation userTable (FK "user_id")
+              insertAccount = build1With1CustomRel conn customRel accountTableAsChild
+            userId    <- insertUser ("John" :: Text, "Doe" :: Text, 1 :: Int)
+            accountId <- insertAccount ("Account-1" :: Text, "Description" :: Text, fromJust userId)
+
+            accountId `shouldBe` Just (Id 1)
+      
 
       describe "insert" $ do
         context "for a table with no relationships" $
